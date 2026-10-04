@@ -10,9 +10,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include <pthread.h>
+#include <time.h>
 
 /* If DEBUG defined, prints arrays*/
-// #define DEBUG
+//#define DEBUG
 
 /* Global variables */
 int thread_count;
@@ -57,6 +58,9 @@ int main(int argc, char *argv[])
     y_serial = malloc(m * sizeof(double));
     y = malloc(m * sizeof(double));
 
+    struct timespec start,finish;
+    double time_Mat_vect_mult, time_Mat_vect_mult_parallel;
+
     Generate_matrix("Generate the matrix", A, m, n);
 #ifdef DEBUG
     Print_matrix("Matrix is", A, m, n);
@@ -68,15 +72,34 @@ int main(int argc, char *argv[])
 #endif
 
     printf("Serial... ");
+
+    clock_gettime(CLOCK_MONOTONIC,&start);
     Mat_vect_mult(A, x, y_serial, m, n);
+    clock_gettime(CLOCK_MONOTONIC,&finish);
+
+    time_Mat_vect_mult = (finish.tv_sec - start.tv_sec);
+    time_Mat_vect_mult += (double)(finish.tv_nsec - start.tv_nsec) / 1000000000.0;
 
 #ifdef DEBUG
     Print_vector("Serial Result", y_serial, m);
 #endif
 
     printf("Parallel... ");
-
+    
+    clock_gettime(CLOCK_MONOTONIC,&start);
     Mat_vect_mult_parallel(A, x, y, m, n);
+    clock_gettime(CLOCK_MONOTONIC,&finish);
+
+    time_Mat_vect_mult_parallel = (finish.tv_sec - start.tv_sec);
+    time_Mat_vect_mult_parallel += (double)(finish.tv_nsec - start.tv_nsec) / 1000000000.0;
+
+double speedup = time_Mat_vect_mult / time_Mat_vect_mult_parallel;
+double efficiency = speedup / thread_count;
+
+printf("Serial time:   %f s\n", time_Mat_vect_mult);
+printf("Parallel time: %f s\n", time_Mat_vect_mult_parallel);
+printf("Speedup:       %f\n", speedup);
+printf("Efficiency:    %f\n", efficiency);
 
 #ifdef DEBUG
     Print_vector("Paralell Result", y, m);
